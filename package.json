@@ -1,10 +1,11 @@
 {
-  "name": "deadbolt",
+  "name": "agent-guardrails",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Guardrails that stop an AI coding agent from shipping a data leak.",
+  "description": "Blocks an AI coding agent from writing a data leak — checked before the file is saved, not after.",
   "engines": { "node": ">=24" },
+  "bin": { "guard": "src/cli.ts" },
   "scripts": {
     "demo": "node tools/demo.ts",
     "check": "node src/cli.ts check",

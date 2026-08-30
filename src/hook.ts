@@ -81,7 +81,7 @@ function allow(): void {
  */
 function deny(findings: Finding[]): void {
   const reason = [
-    `Blocked by deadbolt — ${findings.length} rule violation${findings.length === 1 ? '' : 's'} in this edit.`,
+    `Blocked by agent-guardrails — ${findings.length} rule violation${findings.length === 1 ? '' : 's'} in this edit.`,
     '',
     ...findings.map((f) => [`• ${f.title} (${f.ruleId})`, `    ${f.snippet.trim()}`, `    ${f.message}`, '', indent(f.fix, '    ')].join('\n')),
   ].join('\n');

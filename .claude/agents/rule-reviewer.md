@@ -1,6 +1,6 @@
 ---
 name: rule-reviewer
-description: Reviews a change against the deadbolt rules and reports what the automated checks cannot see. Use after editing anything under service/.
+description: Reviews a change against the agent-guardrails rules and reports what the automated checks cannot see. Use after editing anything under service/.
 tools: Read, Grep, Glob, Bash
 ---
 

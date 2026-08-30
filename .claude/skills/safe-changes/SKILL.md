@@ -1,6 +1,6 @@
 ---
 name: safe-changes
-description: How to write queries, logs and route guards in this codebase so they pass the deadbolt rules. Use when adding or changing anything under service/ — endpoints, database queries, log lines, or permission checks.
+description: How to write queries, logs and route guards in this codebase so they pass the agent-guardrails rules. Use when adding or changing anything under service/ — endpoints, database queries, log lines, or permission checks.
 ---
 
 # Writing changes that pass
@@ -63,5 +63,5 @@ quietly removing it.
 ```bash
 npm run check          # scan service/ for problems
 npm test               # rule and hook tests
-node src/cli.ts explain tenant-isolation
+npx guard explain tenant-isolation
 ```

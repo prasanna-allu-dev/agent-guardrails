@@ -36,6 +36,6 @@ console.log(`
   ${dim('one with two tenants in the fixture. Just a customer seeing another')}
   ${dim("customer's data — found weeks later, by them.")}
 
-  ${dim('That single missing filter is what')} ${bold('deadbolt check')} ${dim('looks for,')}
+  ${dim('That single missing filter is what')} ${bold('guard check')} ${dim('looks for,')}
   ${dim('and what the hook refuses to let an agent write in the first place.')}
 `);

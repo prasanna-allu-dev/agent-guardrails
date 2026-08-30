@@ -31,11 +31,11 @@ function main(argv: string[]): number {
 
 function usage(): number {
   console.log(`
-${bold('deadbolt')} — checks code against the rules in ${dim('rules/')}
+${bold('guard')} — checks code against the rules in ${dim('rules/')}
 
-  ${bold('deadbolt check')} ${dim('[path]')}     look for problems (default: service/)
-  ${bold('deadbolt rules')}            list the rules
-  ${bold('deadbolt explain')} ${dim('<rule>')}   why a rule exists and how to satisfy it
+  ${bold('guard check')} ${dim('[path]')}     look for problems (default: service/)
+  ${bold('guard rules')}            list the rules
+  ${bold('guard explain')} ${dim('<rule>')}   why a rule exists and how to satisfy it
 `);
   return 2;
 }
@@ -46,7 +46,7 @@ function check(path: string, rules: Rule[]): number {
     checkSource(readFileSync(file, 'utf8'), rules, relative(process.cwd(), file)),
   );
 
-  const header = `${bold('deadbolt')}  ${dim(`${rules.length} rules · ${files.length} files · ${path}`)}`;
+  const header = `${bold('guard')}  ${dim(`${rules.length} rules · ${files.length} files · ${path}`)}`;
   console.log(`\n${header}\n`);
 
   if (findings.length === 0) {
@@ -57,7 +57,7 @@ function check(path: string, rules: Rule[]): number {
   for (const f of findings) report(f);
 
   const count = `${findings.length} problem${findings.length === 1 ? '' : 's'}`;
-  console.log(`  ${red(bold(count))}  ${dim(`· deadbolt explain <rule> for the reasoning`)}\n`);
+  console.log(`  ${red(bold(count))}  ${dim(`· guard explain <rule> for the reasoning`)}\n`);
   return 1;
 }
 

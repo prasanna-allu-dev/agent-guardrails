@@ -1,8 +1,8 @@
 <div align="center">
 
-# deadbolt
+# agent-guardrails
 
-**Guardrails that stop an AI coding agent from writing a data leak — checked before the file is saved, not after.**
+**Blocks an AI coding agent from writing a data leak — checked before the file is saved, not after.**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-24-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
@@ -91,7 +91,7 @@ the rule fires — a warning nobody can act on just gets switched off.
 **On the command line**, over any folder:
 
 ```
-deadbolt  4 rules · 2 files · examples/tenant-isolation
+guard  4 rules · 2 files · examples/tenant-isolation
 
   ✗  examples/tenant-isolation/bad.ts:4  tenant-isolation
      Every database query must say which customer it is for
@@ -106,7 +106,7 @@ deadbolt  4 rules · 2 files · examples/tenant-isolation
 
      `ctx.tenantId` comes from the authenticated request — never from user input.
 
-  2 problems  · deadbolt explain <rule> for the reasoning
+  2 problems  · guard explain <rule> for the reasoning
 ```
 
 **And inside Claude Code**, as a hook. Claude Code asks permission before it
@@ -114,7 +114,7 @@ writes a file; `src/hook.ts` answers. If the pending edit breaks a rule, the
 write does not happen and the agent is told why:
 
 ```
-Blocked by deadbolt — 1 rule violation in this edit.
+Blocked by agent-guardrails — 1 rule violation in this edit.
 
 • Every database query must say which customer it is for (tenant-isolation)
     db.users.findMany({ where: { name } })
@@ -215,7 +215,7 @@ npm run check -- examples
 Ask why a rule exists:
 
 ```bash
-node src/cli.ts explain tenant-isolation
+npx guard explain tenant-isolation
 ```
 
 To see the hook block an edit, open this repo in Claude Code — `.claude/settings.json`
@@ -229,7 +229,7 @@ wires it up on clone — and ask it to *"add an endpoint that lists all users"*.
 rules/           4 rules, one YAML file each — readable without knowing TypeScript
 examples/        a bad and a good file per rule; the tests run against these
 src/policy/      the engine: 236 lines, no network, no state
-src/cli.ts       deadbolt check | rules | explain
+src/cli.ts       guard check | rules | explain
 src/hook.ts      the same engine, wired into Claude Code's PreToolUse hook
 service/         a small multi-tenant app for the rules to be demonstrated against
 .claude/         the hook, a skill, a slash command, and a reviewer subagent
