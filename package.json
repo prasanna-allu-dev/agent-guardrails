@@ -3,21 +3,27 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Blocks an AI coding agent from writing a data leak — checked before the file is saved, not after.",
+  "description": "Blocks an AI coding agent from writing a data leak \u2014 checked before the file is saved, not after.",
   "author": "allubalu (https://github.com/allubalu)",
   "license": "MIT",
   "repository": "github:allubalu/agent-guardrails",
-  "engines": { "node": ">=24" },
-  "bin": { "guard": "src/cli.ts" },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "guard": "src/cli.ts"
+  },
   "scripts": {
     "demo": "node tools/demo.ts",
     "check": "node src/cli.ts check",
     "hook": "node src/hook.ts",
     "test": "vitest run",
-    "lint": "oxlint src service tests tools",
-    "typecheck": "tsc -p tsconfig.json"
+    "lint": "oxlint src service tests tools evals",
+    "typecheck": "tsc -p tsconfig.json",
+    "eval": "node evals/run.ts"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.251",
     "@types/node": "^24.13.2",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",

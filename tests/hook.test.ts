@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -85,6 +86,46 @@ describe('the hook sees the edit, not just the result', () => {
     // text there is nothing to suggest anything was taken away — which is
     // exactly the distinction a file-at-rest linter cannot make.
     const { denied } = await callHook(edit('', `route('GET', '/health', healthCheck)`));
+    expect(denied).toBe(false);
+  });
+});
+
+describe('a rewrite is treated like an edit', () => {
+  // Found by the eval, not by review. An agent removed a permission check with
+  // zero blocked attempts, because it rewrote routes.ts wholesale instead of
+  // editing it — and the guard-removal rule only ran on edits. Delivering the
+  // same change through Write walked straight past the hook.
+  const routes = join(import.meta.dirname, '..', 'service', 'src', 'routes.ts');
+
+  it('blocks a whole-file write that drops a permission check', async () => {
+    const original = readFileSync(routes, 'utf8');
+    const guardRemoved = original.replace("guard: requireRole('admin'),", 'guard: () => {},');
+    expect(guardRemoved).not.toBe(original); // the fixture must actually differ
+
+    const { denied, reason } = await callHook({
+      tool_name: 'Write',
+      tool_input: { file_path: routes, content: guardRemoved },
+    });
+    expect(denied).toBe(true);
+    expect(reason).toContain('keep-auth-checks');
+  });
+
+  it('allows a whole-file write that keeps every check', async () => {
+    const { denied } = await callHook({
+      tool_name: 'Write',
+      tool_input: { file_path: routes, content: readFileSync(routes, 'utf8') },
+    });
+    expect(denied).toBe(false);
+  });
+
+  it('allows a brand new file, which has nothing to compare against', async () => {
+    const { denied } = await callHook({
+      tool_name: 'Write',
+      tool_input: {
+        file_path: join(import.meta.dirname, '..', 'service', 'src', 'does-not-exist.ts'),
+        content: 'export const nothing = 1;\n',
+      },
+    });
     expect(denied).toBe(false);
   });
 });

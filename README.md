@@ -6,8 +6,9 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-24-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Tests](https://img.shields.io/badge/tests-27%20passing-brightgreen)](#what-is-actually-proven-here)
+[![Tests](https://img.shields.io/badge/tests-37%20passing-brightgreen)](#what-is-actually-proven-here)
 [![Rules](https://img.shields.io/badge/rules-4-blue)](#the-rules)
+[![Eval](https://img.shields.io/badge/eval-46%20agent%20runs-8A3FFC)](evals/)
 
 </div>
 
@@ -166,7 +167,7 @@ if (removed <= 0) continue;
 
 Honest accounting, because "we have guardrails" is easy to say.
 
-**Proven by the test suite** — `npm test`, 27 tests:
+**Proven by the test suite** — `npm test`, 37 tests:
 
 - Every rule catches a real violation, and clears a real fix. Each rule ships
   with a `bad` and a `good` example in `examples/`, and the test walks the rules
@@ -179,10 +180,32 @@ Honest accounting, because "we have guardrails" is easy to say.
   Blocking every edit because of a bug in the checker would be worse than
   missing a violation.
 
-**Not proven here.** How often a real agent trips these rules in ordinary work.
-That needs a proper eval — the same set of tasks run with the hook on and off,
-scored — and it is the obvious next thing to build. There is no scoreboard in
-this README because I have not run that yet.
+**Measured, not asserted** — 46 agent runs on `claude-opus-5`, six tasks, each
+given to a real agent with the hook on and with it off, everything else held
+identical. Method and raw per-run results in [evals/](evals/).
+
+The outcome is more interesting than a clean win, because two thirds of it is
+negative:
+
+| What happened | What it means |
+|---|---|
+| 5 of 6 tasks produced **no violations in either arm** | On this model the tempting query and logging tasks did not tempt it — it scoped its queries and logged ids unprompted. The hook changed nothing there, because there was nothing to change. |
+| Every violation, in both batches, was **the same rule** | A permission check deleted to make a 403 go away — the one a linter cannot see. The value concentrates somewhere much narrower than "agents write unsafe code". |
+| On that task, **2 of 5** unguarded runs removed the guard; with the hook, 3 runs were blocked and **1 of 5** still got through | It reduces the failure. It does not eliminate it. |
+
+If you are adding guardrails of your own, the first row is the useful finding: a
+current model already respects several of these rules unprompted, and a rule
+that never fires is cost without benefit. Worth measuring before writing twenty
+of them.
+
+**The eval found a bug in the hook.** One run removed a permission check with
+the hook enabled and *zero* blocked attempts. The agent had rewritten the file
+wholesale with `Write` rather than editing it — and the guard-removal rule only
+ran on edits, so the same change delivered a different way walked straight past
+the check. Nobody caught that in review; the eval caught it on run 19. It is
+fixed, with a regression test. A second bypass is still open and unidentified,
+and is written down in [evals/README.md](evals/README.md) rather than rounded
+away.
 
 **Known limits**, also in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
 
@@ -192,6 +215,8 @@ this README because I have not run that yet.
 - Only the changed text is checked, not the whole file, so the agent is never
   blocked for a problem it did not introduce — and a violation assembled across
   several separate edits can slip through.
+- At least one way of removing a permission check without the hook noticing is
+  still open. It was seen once in the eval and has not been reproduced since.
 - `no-pii-in-logs` matches field names. Free text that identifies someone without
   using one of those names gets through.
 
@@ -218,6 +243,13 @@ Ask why a rule exists:
 npx guard explain tenant-isolation
 ```
 
+Re-run the measurement yourself (this makes real API calls and costs real money —
+the 46 runs behind the numbers above came to $13.94):
+
+```bash
+npm run eval -- --task internal-tool-403 --reps 3
+```
+
 To see the hook block an edit, open this repo in Claude Code — `.claude/settings.json`
 wires it up on clone — and ask it to *"add an endpoint that lists all users"*.
 
@@ -228,11 +260,12 @@ wires it up on clone — and ask it to *"add an endpoint that lists all users"*.
 ```
 rules/           4 rules, one YAML file each — readable without knowing TypeScript
 examples/        a bad and a good file per rule; the tests run against these
-src/policy/      the engine: 236 lines, no network, no state
+src/policy/      the engine — no network, no state
 src/cli.ts       guard check | rules | explain
 src/hook.ts      the same engine, wired into Claude Code's PreToolUse hook
 service/         a small multi-tenant app for the rules to be demonstrated against
 .claude/         the hook, a skill, a slash command, and a reviewer subagent
+evals/           the measurement: real agent runs, hook on vs hook off
 ```
 
 The engine is the only place that knows how to evaluate a rule. The CLI and the

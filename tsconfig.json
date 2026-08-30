@@ -12,6 +12,12 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "service/**/*.ts", "tests/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "service/**/*.ts",
+    "tests/**/*.ts",
+    "tools/**/*.ts",
+    "evals/**/*.ts"
+  ],
   "exclude": ["node_modules", "examples"]
 }

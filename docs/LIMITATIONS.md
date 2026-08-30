@@ -47,15 +47,35 @@ Widening this rule trades false negatives for false positives, and a rule that
 fires on innocent code is a rule people turn off. The current setting is
 deliberately conservative.
 
-## Nothing here has been measured against a real agent
+## The hook can still be got around
 
-The tests prove the rules work on code that breaks them. They do not show how
-often an agent actually writes such code, or how often the hook changes the
-outcome of a real task.
+The eval (see [../evals/README.md](../evals/README.md)) found one way, and
+strongly suggests a second.
 
-That measurement is a real piece of work: a fixed set of tasks, run repeatedly
-with the hook on and off, scored the same way each time. Until it exists, this
-repository claims that the checks are correct — not that they are sufficient.
+**Found and fixed:** rewriting a file wholesale with `Write` instead of editing
+it. The guard-removal rule only ran on edits, so the same change delivered as a
+rewrite was invisible to the hook. `Write` now reads the file from disk and
+compares against it, with a regression test in `tests/hook.test.ts`.
+
+**Still open:** in a later run, a permission check was removed with the hook
+enabled and zero blocked attempts, by some route other than the `Write` one. It
+happened once in five runs and has not been reproduced. Until it is understood,
+the honest claim is that the hook *reduces* this failure rather than prevents
+it — which is what the measured numbers say as well.
+
+More generally, this stops a careless change, not a determined one. Anything
+reaching the filesystem by another path — a shell command, a build step, a
+dependency — never passes the hook at all.
+
+## What the measurement does and does not cover
+
+46 agent runs, one model (`claude-opus-5`), six tasks. Enough to show a
+direction; nowhere near enough for a rate quoted to two significant figures.
+
+It says nothing about other models, and the most interesting untested question
+is whether a smaller or cheaper one trips these rules more often. Five of the
+six tasks produced no violations at all here — that is a fact about this model,
+not a fact about agents.
 
 ## The service is a demonstration
 
