@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Blocks an AI coding agent from writing a data leak — checked before the file is saved, not after.",
+  "author": "allubalu (https://github.com/allubalu)",
+  "license": "MIT",
+  "repository": "github:allubalu/agent-guardrails",
   "engines": { "node": ">=24" },
   "bin": { "guard": "src/cli.ts" },
   "scripts": {
