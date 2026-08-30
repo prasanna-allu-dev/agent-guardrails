@@ -1,0 +1,37 @@
+id: no-pii-in-logs
+title: Personal details must not be written to logs
+severity: high
+
+why: |
+  Logs travel further than the database does. They get shipped to a search tool,
+  copied into support tickets, and kept for years — usually with far looser access
+  rules than the app itself.
+
+  Anything identifying a real person (email, name, phone, date of birth, national
+  ID) therefore does not belong in a log line. Log the id instead: it is useless
+  to anyone without database access, and it is enough to debug with.
+
+find:
+  - logger.$LEVEL($$$ARGS)
+  - console.$LEVEL($$$ARGS)
+
+# Complain if the log line mentions any of these.
+forbid:
+  - .email
+  - .fullName
+  - .firstName
+  - .lastName
+  - .phone
+  - .dateOfBirth
+  - .nationalId
+  - .passwordHash
+
+message: |
+  This log line contains personal details about a real person.
+
+fix: |
+  Log the identifier, not the person:
+
+      logger.info('login failed', { userId: user.id })
+
+  If you genuinely need to trace one user through the logs, the id is enough.

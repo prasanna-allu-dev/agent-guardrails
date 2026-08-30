@@ -1,0 +1,33 @@
+id: tenant-isolation
+title: Every database query must say which customer it is for
+severity: critical
+
+why: |
+  This app keeps every customer's data in the same tables, and tells them apart
+  with a `tenantId` column. A query that forgets `tenantId` does not fail or
+  return nothing — it quietly returns *every customer's* rows.
+
+  That is the worst bug this codebase can ship. It looks fine in review, passes
+  tests written against one customer's data, and only shows up when a real
+  customer sees someone else's records.
+
+# Find any of these database calls...
+find:
+  - db.$TABLE.findMany($$$ARGS)
+  - db.$TABLE.findFirst($$$ARGS)
+  - db.$TABLE.updateMany($$$ARGS)
+  - db.$TABLE.deleteMany($$$ARGS)
+  - db.$TABLE.count($$$ARGS)
+
+# ...and complain if the call does not mention this.
+require: tenantId
+
+message: |
+  This query is not scoped to a customer, so it reads across all of them.
+
+fix: |
+  Add the caller's tenant to the filter:
+
+      db.users.findMany({ where: { tenantId: ctx.tenantId, active: true } })
+
+  `ctx.tenantId` comes from the authenticated request — never from user input.

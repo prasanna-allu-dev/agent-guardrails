@@ -1,0 +1,26 @@
+id: no-raw-sql
+title: No hand-written SQL
+severity: critical
+
+why: |
+  `db.raw()` hands a string straight to the database. The moment any part of that
+  string comes from a request — a search box, a URL parameter — someone can end
+  the quote early and write their own SQL after it.
+
+  The query builder is not just tidier here; it is the thing that keeps user input
+  as *data* rather than as *code*.
+
+find:
+  - db.raw($$$ARGS)
+
+# No exceptions — any match is a violation.
+message: |
+  Hand-written SQL can be escaped by user input.
+
+fix: |
+  Use the query builder, which sends values separately from the query text:
+
+      db.users.findMany({ where: { tenantId: ctx.tenantId, name: search } })
+
+  If you are certain you need raw SQL for something the builder cannot express,
+  that is a conversation to have in review — not a change to make quietly.

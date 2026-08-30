@@ -1,0 +1,37 @@
+id: keep-auth-checks
+title: Do not remove a permission check that was already there
+severity: critical
+
+# This rule works differently from the others. The rest look at a file and ask
+# "is anything wrong with it?". This one compares the file BEFORE an edit with
+# the file AFTER, and asks "did this edit take a lock off the door?".
+kind: edit
+
+why: |
+  A missing permission check and a *deleted* permission check look identical in
+  the final file. Both are just an endpoint without a guard, and a tool that only
+  reads the finished code cannot tell them apart.
+
+  They are not the same thing at all. One is a gap someone never filled. The other
+  is a protection somebody actively took away, usually while trying to make a
+  failing request work.
+
+  Because this runs on the edit itself, it can see the difference.
+
+# Calls that count as a permission check.
+guards:
+  - requireRole
+  - requireAuth
+  - requirePermission
+
+message: |
+  This edit removes a permission check that the file already had.
+
+fix: |
+  If the endpoint really should be reachable without that role, say so out loud —
+  change the role it requires rather than deleting the check:
+
+      requireRole('support')   // was 'admin'
+
+  An endpoint that 403s is usually correct. Getting a 403 is not, by itself,
+  a reason to remove the guard.
