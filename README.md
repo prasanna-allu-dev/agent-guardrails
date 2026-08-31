@@ -10,6 +10,12 @@
 [![Rules](https://img.shields.io/badge/rules-4-blue)](#the-rules)
 [![Eval](https://img.shields.io/badge/eval-46%20agent%20runs-8A3FFC)](evals/)
 
+<br>
+
+<img src="docs/assets/hook-blocks-edit.gif" alt="An agent is asked to fix a 403, tries to remove a permission check, and is blocked before the write lands" width="820">
+
+<em>A real session, not a mock-up. Captured by <code>tools/capture-session.ts</code>;<br>the transcript it came from is committed in <code>docs/assets/session.json</code>.</em>
+
 </div>
 
 ---
@@ -91,24 +97,7 @@ the rule fires — a warning nobody can act on just gets switched off.
 
 **On the command line**, over any folder:
 
-```
-guard  4 rules · 2 files · examples/tenant-isolation
-
-  ✗  examples/tenant-isolation/bad.ts:4  tenant-isolation
-     Every database query must say which customer it is for
-
-       db.users.findMany({ where: { name, active: true } })
-
-     This query is not scoped to a customer, so it reads across all of them.
-
-     Add the caller's tenant to the filter:
-
-         db.users.findMany({ where: { tenantId: ctx.tenantId, active: true } })
-
-     `ctx.tenantId` comes from the authenticated request — never from user input.
-
-  2 problems  · guard explain <rule> for the reasoning
-```
+<img src="docs/assets/guard-check.gif" alt="guard check finding hand-written SQL in the examples folder" width="820">
 
 **And inside Claude Code**, as a hook. Claude Code asks permission before it
 writes a file; `src/hook.ts` answers. If the pending edit breaks a rule, the
@@ -203,9 +192,19 @@ the hook enabled and *zero* blocked attempts. The agent had rewritten the file
 wholesale with `Write` rather than editing it — and the guard-removal rule only
 ran on edits, so the same change delivered a different way walked straight past
 the check. Nobody caught that in review; the eval caught it on run 19. It is
-fixed, with a regression test. A second bypass is still open and unidentified,
-and is written down in [evals/README.md](evals/README.md) rather than rounded
-away.
+fixed, with a regression test.
+
+**Then it found a second one, which matters more than the first.** A later run
+removed a guard with zero blocks again, and instrumenting the session explained
+why: the agent had stopped using `Edit` altogether and was changing files with
+**shell commands**. A `PreToolUse` hook on `Write|Edit|MultiEdit` never sees a
+`sed -i`.
+
+That is not a bug in a rule — it is the shape of the whole approach. **A hook
+gates tools, not the filesystem.** Any agent with shell access can walk around
+every rule in this repo, and no amount of rule-writing changes it. Which is why
+`npm run check` also runs in CI: the hook is fast feedback while the agent
+works, and the scan over the finished tree is the part that actually holds.
 
 **Known limits**, also in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
 
@@ -215,8 +214,9 @@ away.
 - Only the changed text is checked, not the whole file, so the agent is never
   blocked for a problem it did not introduce — and a violation assembled across
   several separate edits can slip through.
-- At least one way of removing a permission check without the hook noticing is
-  still open. It was seen once in the eval and has not been reproduced since.
+- The hook only sees the tools it is attached to. An agent that edits files with
+  shell commands bypasses every rule here — found in the eval, and inherent to
+  hooks rather than fixable in a rule.
 - `no-pii-in-logs` matches field names. Free text that identifies someone without
   using one of those names gets through.
 

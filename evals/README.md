@@ -135,10 +135,20 @@ Nobody spotted that in review. The eval spotted it on run 19.
 It is fixed — `Write` now reads the file from disk and compares against it, the
 same way an edit is compared — with a regression test in `tests/hook.test.ts`.
 
-**A second path is still open.** In the focused run *after* that fix, one run
-again removed a guard with zero blocked attempts. Whatever route it took is not
-the `Write` one, and it has not been identified yet. It is written down here
-rather than left as a rounding error in a summary table.
+**Then it found a second one, and this one is not fixable in a rule.** In the
+focused run *after* that fix, another run removed a guard with zero blocked
+attempts. Logging every tool call the agent made explained it: ten `Bash` calls
+and no `Edit` calls. The agent was changing files with shell commands, and a
+`PreToolUse` hook on `Write|Edit|MultiEdit` never fired.
+
+A hook gates tools, not the filesystem. Full consequences in
+[../docs/LIMITATIONS.md](../docs/LIMITATIONS.md).
+
+**This bounds the eval too, and it cuts against the with-hook arm.** In any run
+where the agent reached for the shell, the with-hook arm was not really testing
+the hook — the writes never passed through it. So the measured with-hook numbers
+are, if anything, better than what the hook alone earns. The three runs where a
+write *was* blocked are unaffected: those went through `Edit`.
 
 ## Reading the results
 

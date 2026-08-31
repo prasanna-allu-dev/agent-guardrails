@@ -57,15 +57,29 @@ it. The guard-removal rule only ran on edits, so the same change delivered as a
 rewrite was invisible to the hook. `Write` now reads the file from disk and
 compares against it, with a regression test in `tests/hook.test.ts`.
 
-**Still open:** in a later run, a permission check was removed with the hook
-enabled and zero blocked attempts, by some route other than the `Write` one. It
-happened once in five runs and has not been reproduced. Until it is understood,
-the honest claim is that the hook *reduces* this failure rather than prevents
-it — which is what the measured numbers say as well.
+**Found, and not fixable here:** a later run removed a guard with the hook
+enabled and zero blocked attempts again. Instrumenting the session to log every
+tool call explained it — the agent had stopped using `Edit` and was changing
+files with **shell commands**. Ten `Bash` calls, no `Edit` calls, and a hook on
+`Write|Edit|MultiEdit` that never fired once.
 
-More generally, this stops a careless change, not a determined one. Anything
-reaching the filesystem by another path — a shell command, a build step, a
-dependency — never passes the hook at all.
+This is worth being blunt about, because it bounds the whole idea:
+
+> **A hook gates tools, not the filesystem.**
+
+Any agent with shell access can walk around every rule in this repository, and
+writing better rules does not change that. `sed -i`, a heredoc, a build step, a
+dependency's postinstall — none of them pass through `PreToolUse`.
+
+Two things follow. First, the hook is fast feedback, not an enforcement
+boundary; `npm run check` over the finished tree is the part that actually holds,
+which is why CI runs it. Second, if you genuinely need enforcement, it belongs
+somewhere the agent cannot reach — a pre-commit hook it does not control, a
+required CI check, or branch protection.
+
+`tools/capture-session.ts` passes `disallowedTools: ['Bash']` for exactly this
+reason: with shell access left open, a captured session shows the agent quietly
+routing around the thing the capture is supposed to demonstrate.
 
 ## What the measurement does and does not cover
 
